@@ -1,6 +1,5 @@
 import { pgTable, text, uuid, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
 
 export const memberTierEnum = pgEnum("member_tier", ["Explorer", "Pioneer", "Vanguard"]);
 export const memberStatusEnum = pgEnum("member_status", ["ACTIVE", "PENDING"]);
@@ -28,6 +27,6 @@ export const insertMemberSchema = createInsertSchema(membersTable).omit({
 
 export const updateMemberSchema = insertMemberSchema.partial().omit({ email: true });
 
-export type InsertMember = z.infer<typeof insertMemberSchema>;
-export type UpdateMember = z.infer<typeof updateMemberSchema>;
 export type Member = typeof membersTable.$inferSelect;
+export type InsertMember = Omit<typeof membersTable.$inferInsert, "id" | "createdAt" | "updatedAt">;
+export type UpdateMember = Partial<Omit<InsertMember, "email">>;

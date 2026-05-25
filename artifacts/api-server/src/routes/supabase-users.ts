@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type User } from "@supabase/supabase-js";
 import { requireAuth } from "../middleware/auth";
 
 const router = new Hono();
@@ -8,32 +8,30 @@ router.use("/users", requireAuth);
 router.use("/manage-supabase-user", requireAuth);
 
 function getAdminClient() {
-  const supabaseUrl     = process.env["SUPABASE_URL"];
-  const serviceRoleKey  = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  const supabaseUrl    = process.env["SUPABASE_URL"];
+  const serviceRoleKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
 
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error("Supabase configuration missing: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 }
 
 router.get("/users", async (c) => {
   try {
     const supabaseAdmin = getAdminClient();
-    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
     if (error) throw error;
 
+    const users: User[] = data.users;
     const mapped = users.map((u) => ({
       id:    u.id,
       email: u.email,
-      name:  u.user_metadata?.["full_name"] ?? u.user_metadata?.["name"] ?? "",
-      tier:  u.user_metadata?.["tier"] ?? "",
+      name:  (u.user_metadata?.["full_name"] ?? u.user_metadata?.["name"] ?? "") as string,
+      tier:  (u.user_metadata?.["tier"] ?? "") as string,
     }));
 
     return c.json(mapped);
@@ -55,9 +53,10 @@ router.post("/manage-supabase-user", async (c) => {
     const supabaseAdmin = getAdminClient();
 
     if (action === "add") {
-      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers();
       if (listError) throw listError;
 
+      const users: User[] = data.users;
       const existing = users.find((u) => u.email === email);
       if (existing) {
         return c.json({ message: "User already exists", user: existing });
@@ -73,9 +72,10 @@ router.post("/manage-supabase-user", async (c) => {
       return c.json({ message: "User invited successfully", data: inviteData });
 
     } else if (action === "delete") {
-      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers();
       if (listError) throw listError;
 
+      const users: User[] = data.users;
       const target = users.find((u) => u.email === email);
       if (!target) {
         return c.json({ message: "User not found in Auth" });
