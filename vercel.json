@@ -2,5 +2,6 @@
   "buildCommand": "pnpm --filter @workspace/portal run build",
   "outputDirectory": "artifacts/portal/dist/public",
   "installCommand": "pnpm install",
-  "framework": null
+  "framework": null,
+  "rootDirectory": "artifacts/portal"
 }
