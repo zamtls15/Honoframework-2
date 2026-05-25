@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SpaceX HQ">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/favicon.svg">
+    <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+    <title>SpaceX HQ | Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* ── Header ── */
+        .admin-header {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /* ── Logo ── */
+        .brand-logo {
+            filter: brightness(0) invert(1);
+            transition: filter 0.3s;
+        }
+        html.light .brand-logo {
+            filter: brightness(0);
+        }
+
+        .admin-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .admin-badge {
+            font-size: 9px;
+            font-weight: 800;
+            color: var(--danger);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            padding: 3px 10px;
+            border-radius: 4px;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .header-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ── Main Layout ── */
+        .admin-main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        .page-title-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .page-title h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .page-title p {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .add-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: -0.01em;
+        }
+
+        .add-btn:hover {
+            filter: brightness(0.9);
+            transform: translateY(-1px);
+        }
+
+        /* ── Stats Row ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+            animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 24px;
+        }
+
+        .stat-card .label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 22px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.02em;
+        }
+
+        /* ── Table ── */
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .count-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            background: rgba(var(--text-rgb), 0.05);
+            border: 1px solid var(--border);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 12px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ── Table Row Buttons ── */
+        .row-btn {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.03em;
+        }
+
+        .row-btn-edit {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border-bright);
+        }
+        .row-btn-edit:hover {
+            border-color: var(--border-bright);
+            color: var(--text);
+        }
+
+        .row-btn-delete {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid rgba(239,68,68,0.2);
+        }
+        .row-btn-delete:hover {
+            border-color: rgba(239,68,68,0.5);
+            background: rgba(239,68,68,0.05);
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        html.light .modal-overlay { background: rgba(0, 0, 0, 0.2); }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border-bright);
+            border-radius: 24px;
+            padding: 32px;
+            width: 100%;
+            max-width: 480px;
+            max-height: calc(100dvh - 40px);
+            overflow-y: auto;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal h2 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            background: rgba(var(--text-rgb, 255, 255, 255), 0.03);
+            border: 1px solid var(--border-bright);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: 'Inter', -apple-system, sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+
+        html.light .form-group input,
+        html.light .form-group select {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .form-group input::placeholder { color: var(--muted); opacity: 0.5; }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .form-group select option {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: -0.01em;
+        }
+
+        .modal-btn-primary {
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+        }
+
+        .modal-btn-primary:hover { filter: brightness(0.9); }
+
+        .modal-btn-secondary {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border-bright);
+        }
+
+        .modal-btn-secondary:hover {
+            border-color: var(--border-bright);
+            color: var(--text);
+        }
+
+        .modal-error {
+            color: var(--danger);
+            font-size: 12px;
+            margin-top: 12px;
+            font-weight: 600;
+            display: none;
+        }
+
+        /* ── Confirm Modal ── */
+        .confirm-modal {
+            background: var(--surface);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 24px;
+            padding: 32px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .confirm-modal .icon-wrap {
+            width: 48px;
+            height: 48px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: var(--danger);
+        }
+
+        .confirm-modal h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .confirm-modal p {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .confirm-btn-danger {
+            flex: 1;
+            padding: 13px;
+            border-radius: 10px;
+            background: var(--danger);
+            color: #ffffff;
+            border: none;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .confirm-btn-danger:hover { filter: brightness(1.1); }
+
+        .confirm-btn-cancel {
+            flex: 1;
+            padding: 13px;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border-bright);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .confirm-btn-cancel:hover { color: var(--text); border-color: var(--border-bright); }
+
+        @media (max-width: 768px) {
+            .admin-main { padding: 24px 16px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .admin-header { padding: 0 16px; }
+            .page-title-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+            table { font-size: 13px; }
+            .modal-overlay { align-items: flex-start; padding: 16px; }
+            .modal { padding: 24px 20px; border-radius: 16px; max-height: none; }
+            .modal-actions { position: sticky; bottom: 0; background: var(--surface); padding-top: 16px; margin-top: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="admin-header">
+    <div class="admin-header-left">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/SpaceX_logo_black.svg"
+             class="brand-logo" style="height: 14px;" alt="SpaceX">
+        <div class="admin-badge">Admin</div>
+    </div>
+    <div class="header-status">
+        <div class="header-dot"></div>
+        <span id="live-clock">--:--:--</span>
+    </div>
+</header>
+
+<main class="admin-main">
+
+    <div class="page-title-row">
+        <div class="page-title">
+            <h1>Member Management</h1>
+            <p>Add, edit, or remove members from the SpaceX ecosystem.</p>
+        </div>
+        <button class="add-btn" id="btn-add-member">
+            <i data-lucide="plus" style="width:15px;height:15px;"></i>
+            Add Member
+        </button>
+    </div>
+
+    <div class="stats-row" id="stats-row">
+        <div class="stat-card">
+            <div class="label">Total Members</div>
+            <div class="value" id="stat-total">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Active</div>
+            <div class="value" style="color:#10b981;" id="stat-active">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Pending</div>
+            <div class="value" style="color:#f59e0b;" id="stat-pending">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Vanguard Tier</div>
+            <div class="value" style="color:#c5a059;" id="stat-vanguard">—</div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-header-left">
+                <h3>Members</h3>
+                <span class="count-badge" id="member-count">0 members</span>
+            </div>
+            <div class="table-header-right">
+                <div style="position:relative; display:flex; align-items:center;">
+                    <i data-lucide="search" style="position:absolute; left:12px; width:14px; height:14px; color:var(--muted); opacity:0.5;"></i>
+                    <input type="text" id="member-search" placeholder="Search members..." 
+                        style="background:rgba(var(--text-rgb),0.03); border:1px solid var(--border); border-radius:10px; padding:8px 12px 8px 36px; font-size:12px; color:var(--text); outline:none; transition:all 0.2s; width:220px;"
+                        onfocus="this.style.borderColor='rgba(var(--text-rgb),0.2)'; this.style.background='rgba(var(--text-rgb),0.05)';"
+                        onblur="this.style.borderColor='var(--border)'; this.style.background='rgba(var(--text-rgb),0.03)';"
+                    >
+                </div>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Member</th>
+                        <th>Tier</th>
+                        <th>Clearance</th>
+                        <th>Status</th>
+                        <th>Email</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="user-modal">
+    <div class="modal">
+        <h2 id="modal-title">Add Member</h2>
+        <input type="hidden" id="modal-id">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="modal-name" placeholder="e.g. Alex Rivera">
+            </div>
+            <div class="form-group">
+                <label>Role / Title</label>
+                <input type="text" id="modal-role" placeholder="e.g. Mission Analyst">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Email Address <span id="modal-email-required" style="color:var(--danger);font-size:9px;vertical-align:middle;">*</span></label>
+            <input type="email" id="modal-email" placeholder="member@example.com">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Membership Tier</label>
+                <select id="modal-tier">
+                    <option value="Explorer">Explorer</option>
+                    <option value="Pioneer">Pioneer</option>
+                    <option value="Vanguard">Vanguard</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="modal-status">
+                    <option value="PENDING">Pending</option>
+                    <option value="ACTIVE">Active</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Clearance Level</label>
+                <input type="text" id="modal-clearance" placeholder="e.g. CLASSIFIED">
+            </div>
+            <div class="form-group">
+                <label>Joined</label>
+                <input type="text" id="modal-joined" placeholder="e.g. May 2025">
+            </div>
+        </div>
+
+        <div style="border-top: 1px solid rgba(255,255,255,0.04); margin: 4px 0 16px; padding-top: 16px;">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">Profile Images (optional)</div>
+            <div class="form-group">
+                <label>Avatar URL</label>
+                <input type="url" id="modal-avatar-url" placeholder="https://example.com/avatar.jpg">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Background URL</label>
+                <input type="url" id="modal-bg-url" placeholder="https://example.com/background.jpg">
+            </div>
+        </div>
+
+        <div class="modal-error" id="modal-error"></div>
+
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" id="btn-modal-cancel">Cancel</button>
+            <button class="modal-btn modal-btn-primary" id="btn-modal-save">Save Member</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="confirm-modal">
+        <div class="icon-wrap">
+            <i data-lucide="trash-2" style="width:20px;height:20px;"></i>
+        </div>
+        <h2>Remove Member</h2>
+        <p>This will remove <strong id="confirm-name"></strong> from the member database. This action cannot be undone.</p>
+        <input type="hidden" id="confirm-id">
+        <div class="confirm-actions">
+            <button class="confirm-btn-cancel" id="btn-confirm-cancel">Cancel</button>
+            <button class="confirm-btn-danger" id="btn-confirm-delete">Remove</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const _ak = localStorage.getItem("_ak");
+if (_ak !== "Sx9k@Zm#4Qp") {
+    const _in = prompt("Access key required:");
+    if (_in !== "Sx9k@Zm#4Qp") {
+        document.documentElement.innerHTML = "";
+        window.location.replace("/pages/login.html");
+    } else {
+        localStorage.setItem("_ak", _in);
+    }
+}
+</script>
+<script type="module" src="../js/admin.js"></script>
+<script>
+    lucide.createIcons();
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('live-clock').textContent = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+
+</body>
+</html>

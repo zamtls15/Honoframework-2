@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SpaceX HQ">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/favicon.svg">
+    <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+    <title>SpaceX HQ | Membership Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+    <style>
+        :root { --header-h: 72px; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: calc(var(--header-h) + 20px) 20px 40px;
+            line-height: 1.5;
+        }
+
+        /* ── Improved Header Layout ── */
+        .portal-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: var(--header-h);
+            background: rgba(var(--bg-rgb, 5, 5, 5), 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        html.light .portal-header {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .brand-logo {
+            height: 16px;
+            filter: brightness(0) invert(1);
+            transition: filter 0.3s;
+        }
+        html.light .brand-logo {
+            filter: brightness(0);
+        }
+
+        /* ── Dynamic Action Menu ── */
+        .action-menu {
+            position: relative;
+        }
+
+        .menu-trigger {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border-bright);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border-bright);
+            border-radius: 16px;
+            width: 180px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            display: none;
+            flex-direction: column;
+            animation: slideIn 0.2s ease-out;
+        }
+
+        .dropdown-content.active { display: flex; }
+
+        .dropdown-item {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            background: none;
+            border: none;
+            text-align: left;
+            width: 100%;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+        }
+
+        .dropdown-item i { width: 16px; height: 16px; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .portal-container { width: 100%; max-width: 600px; }
+
+        /* ── Improved Mobile-Ready Cards ── */
+        .profile-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 32px; /* Smoother Mobile Corners */
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .profile-cover {
+            height: 140px;
+            background: linear-gradient(to bottom, rgba(var(--bg-rgb),0) 0%, var(--bg) 100%),
+                        url('https://images.unsplash.com/photo-1517976487492-5750f3195933?auto=format&fit=crop&w=800&q=80');
+            background-size: cover;
+            background-position: center;
+            background-color: var(--surface);
+        }
+
+        .profile-content { padding: 0 24px 24px; margin-top: -48px; }
+
+        .avatar-wrap {
+            position: relative;
+            width: 88px; height: 88px;
+            border-radius: 50%;
+            background: var(--surface);
+            padding: 4px;
+            margin-bottom: 16px;
+        }
+
+        .avatar {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: var(--surface-hover);
+            background-size: cover;
+            background-position: center;
+            border: 1px solid var(--border);
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 6px; right: 6px;
+            width: 14px; height: 14px;
+            background: var(--success);
+            border: 3px solid var(--surface);
+            border-radius: 50%;
+            animation: pulse 2.5s infinite;
+        }
+
+        .profile-info h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+        .profile-info .subtitle { color: var(--muted); font-size: 14px; font-weight: 400; }
+        .profile-info .joined-date { color: var(--muted); opacity: 0.7; font-size: 12px; margin-top: 4px; font-weight: 500; }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            margin-top: 24px;
+        }
+
+        .stat-item span { display: block; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 6px; }
+        .stat-item strong { font-size: 14px; font-family: 'JetBrains Mono', monospace; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 40px 0 16px 4px;
+        }
+
+        .locked-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .locked-card {
+            background: var(--surface);
+            background-image: radial-gradient(circle at 50% 0%, rgba(var(--text-rgb, 255, 255, 255), 0.03) 0%, transparent 70%);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            text-align: left;
+            position: relative;
+            transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .locked-card:active {
+            transform: scale(0.98);
+        }
+
+        .locked-card .card-loader {
+            position: absolute;
+            inset: 0;
+            background: rgba(var(--bg-rgb), 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .locked-card.is-loading .card-loader { display: flex; }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .cdn-logo {
+            height: 24px;
+            object-fit: contain;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .lock-status {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--pending);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .locked-card h4 { 
+            font-size: 17px; 
+            color: var(--text);
+            margin-bottom: 8px; 
+            font-weight: 600;
+        }
+        
+        .locked-card p { 
+            font-size: 13px; 
+            color: var(--muted); 
+            line-height: 1.5; 
+        }
+        
+        .vip-badge-mini {
+            display: inline-block; 
+            padding: 4px 12px; 
+            background: rgba(var(--text-rgb), 0.03); 
+            color: var(--muted);
+            border: 1px solid var(--border-bright);
+            border-radius: 8px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            margin-top: 16px;
+            text-transform: uppercase;
+        }
+
+        /* ── Membership Tiers ── */
+        .tier-header { margin-bottom: 24px; }
+        .tier-header h2 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
+        .tier-header p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+        .plan-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            margin-bottom: 16px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .plan-item.explorer { opacity: 0.85; }
+        .plan-item.pioneer { border-color: rgba(255,255,255,0.1); }
+        .plan-item.vanguard { 
+            background: var(--surface);
+            border-color: var(--border);
+        }
+        .vanguard .plan-name { color: var(--text); }
+
+        .plan-item.selected {
+            border-color: var(--accent);
+            background: rgba(255,255,255,0.02);
+            box-shadow: 0 0 30px rgba(255,255,255,0.08);
+            transform: scale(1.02);
+        }
+
+        .plan-item.selected.vanguard {
+            border-color: var(--gold);
+            box-shadow: 0 0 40px rgba(197, 160, 89, 0.15);
+        }
+
+        .selection-label {
+            position: absolute;
+            top: 20px; right: 24px;
+            font-size: 10px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--success);
+            display: none;
+            align-items: center; gap: 4px;
+        }
+        .plan-item.selected .selection-label { display: flex; }
+
+        .plan-main-content { padding: 32px 24px; }
+
+        .plan-meta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+        .plan-name { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; }
+        
+        .price-container { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
+        .plan-price { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--text); }
+        .price-sub { font-size: 11px; color: var(--muted); font-weight: 500; }
+        
+        .access-hint {
+            font-size: 9px; font-weight: 800;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.05em; background: rgba(255,255,255,0.05);
+            padding: 3px 8px; border-radius: 4px; width: fit-content;
+            margin-top: 8px;
+        }
+
+        .plan-desc { font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 12px; line-height: 1.5; }
+
+        .plan-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(var(--text-rgb), 0.02);
+        }
+
+        .plan-item.expanded .plan-details { max-height: 600px; padding-bottom: 32px; border-top: 1px solid var(--border); }
+
+        .feature-list { list-style: none; padding: 24px 24px 0; }
+        .feature-list li { 
+            font-size: 12px; 
+            color: var(--muted); 
+            margin-bottom: 10px; 
+            display: flex; 
+            gap: 12px; 
+            line-height: 1.4; 
+        }
+        .feature-list li::before { content: "•"; color: var(--muted); opacity: 0.4; }
+
+        .loading-spinner {
+            display: none;
+            width: 18px; height: 18px;
+            border: 2px solid rgba(var(--bg-rgb), 0.1);
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .is-loading .btn-text { display: none; }
+        .is-loading .loading-spinner { display: inline-block; }
+
+        .btn {
+            width: 100%; padding: 18px; border-radius: 14px; border: none;
+            background: var(--text); color: var(--bg); font-weight: 700; font-size: 15px;
+            cursor: pointer; transition: 0.3s; letter-spacing: -0.01em;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
+        .btn:hover { filter: brightness(0.9); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .btn-secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); margin-top: 12px; }
+
+        /* ── Teams Button Style ── */
+        .teams-btn {
+            background: #5b5fc7;
+            color: #ffffff;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            margin-top: 24px;
+            transition: 0.2s;
+        }
+        .teams-btn:hover { background: #4e52b1; }
+
+        .progress-container {
+            width: 100%; height: 6px; background: rgba(var(--text-rgb), 0.05);
+            border-radius: 10px; margin: 30px 0; overflow: hidden;
+        }
+        .progress-bar {
+            width: 0%; height: 100%; background: var(--text);
+            transition: width 5s linear;
+        }
+
+        .payment-summary {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .payment-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+        .payment-row span:first-child { color: var(--muted); }
+        .payment-row strong { font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 6px; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+
+        .animate-spin-slow { animation: spin-slow 2s linear infinite; }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* ── Light Theme (page-specific overrides) ── */
+        html.light .portal-header { background: rgba(var(--bg-rgb), 0.8); }
+        html.light .brand-logo { filter: brightness(0); }
+        html.light .dropdown-content { background: var(--surface); border-color: var(--border-bright); }
+        html.light .dropdown-item:hover { background: rgba(0,0,0,0.04); }
+        html.light .btn { background: var(--text); color: var(--bg); }
+        html.light .plan-item.selected { box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        html.light .profile-card { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15); }
+
+        @media (max-width: 480px) {
+            .profile-card { border-radius: 24px; }
+            .locked-card { border-radius: 20px; }
+            .profile-info h1 { font-size: 20px; }
+            .plan-name { font-size: 17px; }
+        }
+    </style>
+    <script>
+        (function () {
+            if (localStorage.getItem('spacex_theme') === 'light') {
+                document.documentElement.classList.add('light');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+<!-- Header Layout -->
+<header class="portal-header">
+    <div class="header-content">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/SpaceX_logo_black.svg" class="brand-logo" alt="SpaceX">
+        
+        <div class="action-menu">
+            <button class="menu-trigger" onclick="toggleMenu()" id="menu-btn">
+                <i data-lucide="more-vertical"></i>
+            </button>
+            <div class="dropdown-content" id="dropdown-menu">
+                <button class="dropdown-item" onclick="toggleTheme()">
+                    <i data-lucide="sun" id="drop-icon-sun"></i>
+                    <i data-lucide="moon" id="drop-icon-moon" style="display:none;"></i>
+                    <span>Toggle Theme</span>
+                </button>
+                <button class="dropdown-item" onclick="signOut()" style="color: #ef4444;">
+                    <i data-lucide="log-out"></i>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="portal-container">
+
+    <!-- DASHBOARD -->
+    <div class="screen active" id="screen-0">
+        <div class="profile-card">
+            <div class="profile-cover" id="profile-cover"></div>
+            <div class="profile-content">
+                <div class="avatar-wrap">
+                    <div class="avatar" id="user-avatar"></div>
+                    <div class="status-indicator" id="status-dot"></div>
+                </div>
+                <div class="profile-info">
+                    <h1 id="user-name"></h1>
+                    <p class="subtitle" id="user-subtitle"></p>
+                    <p class="joined-date" id="user-joined"></p>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item"><span>Clearance</span><strong id="user-clearance"></strong></div>
+                    <div class="stat-item"><span>Status</span><strong id="user-status"></strong></div>
+                    <div class="stat-item"><span>System Time</span><strong id="live-clock">00:00:00</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-label">Restricted Ecosystem Assets</div>
+        <div class="locked-grid">
+            <div class="locked-card" onclick="handleUpgradeClick(this)">
+                <div class="card-loader">
+                    <div class="loading-spinner" style="display:block; width:24px; height:24px;"></div>
+                </div>
+                <div class="card-header">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg" alt="Tesla" class="brand-logo" style="height: 24px; margin: 0;">
+                    <div class="lock-status"><i data-lucide="lock" style="width:12px; height:12px;"></i> Locked</div>
+                </div>
+                <h4>Monthly Profits</h4>
+                <p>Automated equity dividends distributed directly to your authenticated wallet monthly.</p>
+                <div class="vip-badge-mini">Yield Distribution</div>
+            </div>
+            
+            <div class="locked-card" onclick="handleUpgradeClick(this)">
+                <div class="card-loader">
+                    <div class="loading-spinner" style="display:block; width:24px; height:24px;"></div>
+                </div>
+                <div class="card-header">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg" alt="Tesla T" class="brand-logo" style="height: 24px; margin: 0;">
+                    <div class="lock-status"><i data-lucide="lock" style="width:12px; height:12px;"></i> Locked</div>
+                </div>
+                <h4>Private Meeting</h4>
+                <p>Personal 1-on-1 strategy session with Elon Musk to discuss mission alignment.</p>
+                <div class="vip-badge-mini">CEO Direct Access</div>
+            </div>
+
+            <div class="locked-card" onclick="handleUpgradeClick(this)">
+                <div class="card-loader">
+                    <div class="loading-spinner" style="display:block; width:24px; height:24px;"></div>
+                </div>
+                <div class="card-header">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg" alt="Tesla" class="brand-logo" style="height: 24px; margin: 0;">
+                    <div class="lock-status"><i data-lucide="lock" style="width:12px; height:12px;"></i> Locked</div>
+                </div>
+                <h4>Tesla AI Day</h4>
+                <p>VIP front-row passes to upcoming AI and Robotaxi reveal events at Gigafactory Texas.</p>
+                <div class="vip-badge-mini">Priority Access</div>
+            </div>
+
+            <div class="locked-card" onclick="handleUpgradeClick(this)">
+                <div class="card-loader">
+                    <div class="loading-spinner" style="display:block; width:24px; height:24px;"></div>
+                </div>
+                <div class="card-header">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/SpaceX_logo_black.svg" alt="SpaceX" class="brand-logo" style="height: 12px; margin: 0;">
+                    <div class="lock-status"><i data-lucide="lock" style="width:12px; height:12px;"></i> Locked</div>
+                </div>
+                <h4>Starbase Entry</h4>
+                <p>Full mission control clearance for the next Starship orbital flight test at Boca Chica.</p>
+                <div class="vip-badge-mini">Operational Clearance</div>
+            </div>
+        </div>
+
+        <button class="btn" id="initial-upgrade-btn" onclick="handleUpgradeClick(this)">
+            <span class="btn-text">Upgrade Clearance</span>
+            <div class="loading-spinner"></div>
+        </button>
+    </div>
+
+    <!-- UPGRADE SELECTION SCREEN -->
+    <div class="screen" id="screen-1">
+        <div class="tier-header">
+            <h2>Select Membership Tier</h2>
+            <p>Elevate your clearance to unlock ecosystem assets and performance yields.</p>
+        </div>
+
+        <div class="plan-item explorer" id="tier-ex" onclick="selectPlan('tier-ex', 'Explorer', '$1,500')">
+            <div class="selection-label">&#10003; Current Tier</div>
+            <div class="plan-main-content">
+                <div class="plan-meta">
+                    <span class="plan-name">Explorer</span>
+                    <div class="price-container">
+                        <span class="plan-price">$1,500</span>
+                        <span class="price-sub">/ one-time</span>
+                    </div>
+                    <div class="access-hint">Clearance Level 1</div>
+                </div>
+                <p class="plan-desc">Entry-level intelligence and ecosystem access for mission observers.</p>
+            </div>
+            <div class="plan-details">
+                <ul class="feature-list">
+                    <li>Weekly mission intelligence briefings</li>
+                    <li>Digital VIP credentials &amp; member badge</li>
+                    <li>Basic profit distribution participation (0.5% base)</li>
+                    <li>Invitation to public SpaceX launch viewings</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="plan-item pioneer" id="tier-pi" onclick="selectPlan('tier-pi', 'Pioneer', '$4,000')">
+            <div class="selection-label">&#10003; Current Tier</div>
+            <div class="plan-main-content">
+                <div class="plan-meta">
+                    <span class="plan-name">Pioneer</span>
+                    <div class="price-container">
+                        <span class="plan-price">$4,000</span>
+                        <span class="price-sub">/ one-time</span>
+                    </div>
+                    <div class="access-hint">Clearance Level 2</div>
+                </div>
+                <p class="plan-desc">Advanced operational access with guaranteed presence at major hardware reveals.</p>
+            </div>
+            <div class="plan-details">
+                <ul class="feature-list">
+                    <li>Guaranteed VIP Passes to Tesla AI Day &amp; Robotaxi events</li>
+                    <li>3&times; Enhanced monthly profit dividends (1.5% base)</li>
+                    <li>Priority seating at Starbase launch events</li>
+                    <li>Access to Private Member Discord for Alpha news</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="plan-item vanguard" id="tier-va" onclick="selectPlan('tier-va', 'Vanguard', '$6,000')">
+            <div class="selection-label">&#10003; Current Tier</div>
+            <div class="plan-main-content">
+                <div class="plan-meta">
+                    <span class="plan-name">Vanguard</span>
+                    <div class="price-container">
+                        <span class="plan-price">$6,000</span>
+                        <span class="price-sub">/ one-time</span>
+                    </div>
+                    <div class="access-hint" style="background: rgba(197, 160, 89, 0.1); color: var(--gold);">Full Operational Clearance</div>
+                </div>
+                <p class="plan-desc">The inner circle. Direct engagement with leadership and maximum ecosystem yields.</p>
+            </div>
+            <div class="plan-details">
+                <ul class="feature-list">
+                    <li><strong>Private 1-on-1 Strategy Meeting with Elon Musk</strong></li>
+                    <li>Maximum monthly profit dividend tier (3.5% target)</li>
+                    <li>Vanguard Council mission voting rights</li>
+                    <li>Lifetime VIP access to Starbase Launch Control</li>
+                    <li>Limited Edition Titanium Physical Membership Card</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="validation-msg" style="color: #ef4444; font-size: 12px; text-align: center; margin-top: 20px; font-weight: 600; display: none;">Please select a membership level to continue</div>
+        
+        <button class="btn" id="confirm-upgrade-btn" style="margin-top: 16px;" onclick="validateAndProceed(this)">
+            <span class="btn-text">Confirm Upgrade</span>
+            <div class="loading-spinner"></div>
+        </button>
+        <button class="btn btn-secondary" onclick="changeScreen(0)">Cancel</button>
+    </div>
+
+    <!-- PROGRESS SCREEN -->
+    <div class="screen" id="screen-2">
+        <div style="text-align: center; padding: 60px 20px;">
+            <div class="loading-spinner" style="display:block; margin: 0 auto 20px; width: 40px; height: 40px; border-width: 3px;"></div>
+            <h2 style="margin-bottom: 12px;">Syncing Credentials</h2>
+            <p style="color: var(--muted); font-size: 14px;">Establishing secure handshake with SpaceX Neural Link...</p>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="load-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT SCREEN -->
+    <div class="screen" id="screen-3">
+        <div class="tier-header">
+            <h2>Complete Enrollment</h2>
+            <p id="enrollment-subtitle" style="font-size: 14px; color: var(--text); opacity: 0.9; margin-top: 4px; font-weight: 500;"></p>
+        </div>
+
+        <div id="enrollment-benefits-wrap" style="margin-bottom: 24px; padding: 20px; background: rgba(var(--text-rgb), 0.02); border: 1px solid var(--border); border-radius: 20px;">
+            <ul id="enrollment-benefits" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;"></ul>
+        </div>
+
+        <div class="payment-summary">
+            <div class="payment-row">
+                <span>Requested Level</span>
+                <strong id="summary-tier">Vanguard</strong>
+            </div>
+            <div class="payment-row">
+                <span>Security Status</span>
+                <strong style="color:var(--pending)">PENDING <i data-lucide="refresh-cw" class="animate-spin-slow" style="width:14px; height:14px;"></i></strong>
+            </div>
+            <div style="border-top: 1px solid var(--border); margin: 16px 0; padding-top: 16px;" class="payment-row">
+                <div style="display: flex; flex-direction: column;">
+                    <span>Total Amount Due</span>
+                    <span style="font-size: 10px; color: var(--muted); margin-top: 2px; opacity: 0.8;">Based on your selected plan.</span>
+                </div>
+                <strong id="summary-price" style="font-size: 18px;">$6,000</strong>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 12px;">
+            <p style="font-size: 11px; color: var(--muted); line-height: 1.5; padding: 0 10px;">
+                Tap below to confirm your enrollment. You’ll be connected with our team via Microsoft Teams to complete your authorization.
+            </p>
+        </div>
+
+        <!-- Microsoft Teams Authorization Button -->
+        <button class="teams-btn" onclick="window.location.href='msteams://'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 4.5a3 3 0 013 3v2a3 3 0 01-3 3h-1a3 3 0 01-3-3v-2a3 3 0 013-3h1zm-5.5 5a2.5 2.5 0 012.5 2.5v1.5a2.5 2.5 0 01-2.5 2.5h-.5a2.5 2.5 0 01-2.5-2.5v-1.5a2.5 2.5 0 012.5-2.5h.5zM12.5 13.5a6.5 6.5 0 016.5 6.5v.5h-13v-.5a6.5 6.5 0 016.5-6.5zm-5.5 4.5a5.5 5.5 0 015.5 5.5v.5h-11v-.5a5.5 5.5 0 015.5-5.5z"/></svg>
+            Authorize via Microsoft Teams
+        </button>
+
+        <p style="text-align: center; font-size: 12px; color: var(--muted); margin-top: 32px; font-weight: 500;">
+            Your information is secure. Our team will confirm your membership within 24 hours of authorization.
+        </p>
+    </div>
+
+</div>
+
+<script type="module" src="../js/user.js"></script>
+<script>
+    /* ── Dropdown and Theme Logic ── */
+    function toggleMenu() {
+        document.getElementById('dropdown-menu').classList.toggle('active');
+    }
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', (e) => {
+        if (!document.getElementById('menu-btn').contains(e.target)) {
+            document.getElementById('dropdown-menu').classList.remove('active');
+        }
+    });
+
+    function applyThemeIcons() {
+        var isLight = document.documentElement.classList.contains('light');
+        var moon = document.getElementById('drop-icon-moon');
+        var sun  = document.getElementById('drop-icon-sun');
+        if (moon) moon.style.display = isLight ? 'none' : 'block';
+        if (sun)  sun.style.display  = isLight ? 'block' : 'none';
+        lucide.createIcons();
+    }
+
+    function toggleTheme() {
+        var current = localStorage.getItem('spacex_theme') || 'dark';
+        var next = current === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('spacex_theme', next);
+        document.documentElement.classList.toggle('light');
+        applyThemeIcons();
+    }
+
+    lucide.createIcons();
+    applyThemeIcons();
+
+    let selectedTierData = { name: '', price: '' };
+
+    function updateClock() {
+        const el = document.getElementById('live-clock');
+        if (el) el.textContent = new Date().toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000); updateClock();
+
+    function changeScreen(idx) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-' + idx).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    window.signOut = async function() {
+        console.log('Global signOut triggered');
+        const { clearSession } = await import('../js/auth.js');
+        await clearSession();
+        window.location.replace('/pages/login.html');
+    };
+
+    function selectPlan(id, name, price) {
+        selectedTierData = { name, price };
+        document.getElementById('validation-msg').style.display = 'none';
+        document.querySelectorAll('.plan-item').forEach(p => {
+            p.classList.remove('selected');
+            p.classList.remove('expanded');
+        });
+        const el = document.getElementById(id);
+        el.classList.add('selected');
+        el.classList.add('expanded');
+    }
+
+    function handleUpgradeClick(element) {
+        if (element.classList.contains('locked-card')) {
+            element.classList.add('is-loading');
+        } else {
+            element.classList.add('is-loading');
+            element.disabled = true;
+        }
+        setTimeout(() => {
+            document.querySelectorAll('.locked-card').forEach(c => c.classList.remove('is-loading'));
+            const mainBtn = document.getElementById('initial-upgrade-btn');
+            mainBtn.classList.remove('is-loading');
+            mainBtn.disabled = false;
+            changeScreen(1);
+        }, 1500);
+    }
+
+    function validateAndProceed(btn) {
+        if (!selectedTierData.name) {
+            document.getElementById('validation-msg').style.display = 'block';
+            return;
+        }
+        btn.classList.add('is-loading');
+        btn.disabled = true;
+        setTimeout(() => {
+            btn.classList.remove('is-loading');
+            btn.disabled = false;
+            changeScreen(2);
+            const bar = document.getElementById('load-progress');
+            setTimeout(() => bar.style.width = '100%', 50);
+            setTimeout(() => {
+                // Populate Screen 3 Dynamic content
+                document.getElementById('summary-tier').textContent = selectedTierData.name;
+                document.getElementById('summary-price').textContent = selectedTierData.price;
+                document.getElementById('enrollment-subtitle').textContent = `You're one step away from activating your ${selectedTierData.name} membership`;
+                
+                const benefits = {
+                    'Explorer': [
+                        'Weekly mission intelligence briefings',
+                        'Digital VIP credentials & member badge',
+                        'SpaceX launch viewing invitations'
+                    ],
+                    'Pioneer': [
+                        'Guaranteed VIP passes to Tesla events',
+                        '3× Enhanced monthly profit dividends',
+                        'Priority seating at Starbase events',
+                        'Private Member Discord access'
+                    ],
+                    'Vanguard': [
+                        'Private 1-on-1 with Elon Musk',
+                        'Maximum monthly profit dividend tier',
+                        'Vanguard Council voting rights',
+                        'Lifetime VIP Starbase access'
+                    ]
+                };
+
+                const benefitList = document.getElementById('enrollment-benefits');
+                benefitList.innerHTML = (benefits[selectedTierData.name] || []).map(b => 
+                    `<li style="display:flex; align-items:flex-start; gap:10px; font-size:12px; color:var(--text); opacity:0.8;">
+                        <i data-lucide="check-circle" style="width:14px; height:14px; color:var(--success); flex-shrink:0; margin-top:2px;"></i>
+                        <span>${b}</span>
+                    </li>`
+                ).join('');
+
+                changeScreen(3);
+                lucide.createIcons();
+            }, 5050);
+        }, 1500);
+    }
+</script>
+
+</body>
+</html>
